@@ -1,0 +1,34 @@
+workflows:
+  ios-release:
+    name: iOS Release Build
+    max_build_duration: 60
+    instance_type: mac_mini_m1
+    environment:
+      groups:
+        # Add your Apple Credentials here in Codemagic UI:
+        # APP_STORE_CONNECT_KEY_IDENTIFIER, APP_STORE_CONNECT_ISSUER_ID, APP_STORE_CONNECT_PRIVATE_KEY
+        - apple_auth 
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Set up code signing settings on Codemagic
+        script: |
+          keychain initialize
+          # Fetching certificates and profiles from Apple
+          app-store-connect fetch-signing-files "com.yossy.stock" --type IOS_APP_STORE --create
+          keychain add-certificates
+      - name: Get Flutter packages
+        script: |
+          flutter pub get
+      - name: Build iOS
+        script: |
+          flutter build ipa --release \
+            --export-options-plist=$CM_EXPORT_OPTIONS_PATH \
+            --build-number=$BUILD_NUMBER
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      email:
+        recipients:
+          - your-email@example.com # Update this

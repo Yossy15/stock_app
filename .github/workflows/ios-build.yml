@@ -1,0 +1,35 @@
+name: iOS Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: '3.x'
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Build iOS IPA
+        run: |
+          # Note: This will build without signing (for verification)
+          # To build a signed IPA, you need to set up certificates/profiles in GitHub Secrets
+          flutter build ios --release --no-codesign
+          
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ios-build
+          path: build/ios/iphoneos
