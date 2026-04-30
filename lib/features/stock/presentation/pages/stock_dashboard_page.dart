@@ -42,116 +42,120 @@ class _StockDashboardPageState extends ConsumerState<StockDashboardPage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FE),
-      body: SmartRefresher(
-        controller: _refreshController,
-        onRefresh: _onRefresh,
-        header: const WaterDropMaterialHeader(
-          backgroundColor: Color(0xFF6C63FF),
-          color: Colors.white,
-        ),
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            // Premium Custom App Bar
-            SliverAppBar(
-              expandedHeight: 120,
-              floating: false,
-              pinned: true,
-              backgroundColor: const Color(0xFF6C63FF),
-              elevation: 0,
-              flexibleSpace: FlexibleSpaceBar(
-                title: const Text(
-                  'สรุปภาพรวมคลังสินค้า',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.white),
-                ),
-                centerTitle: false,
-                titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
-                background: Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Color(0xFF6C63FF), Color(0xFF8A84FF)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+      body: NestedScrollView(
+        headerSliverBuilder: (context, innerBoxIsScrolled) => [
+          // Premium Custom App Bar
+          SliverAppBar(
+            expandedHeight: 120,
+            floating: false,
+            pinned: true,
+            backgroundColor: const Color(0xFF6C63FF),
+            elevation: 0,
+            flexibleSpace: FlexibleSpaceBar(
+              title: const Text(
+                'สรุปภาพรวมคลังสินค้า',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.white),
+              ),
+              centerTitle: false,
+              titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
+              background: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF6C63FF), Color(0xFF8A84FF)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
                 ),
               ),
             ),
+          ),
+        ],
+        body: SmartRefresher(
+          controller: _refreshController,
+          onRefresh: _onRefresh,
+          header: const WaterDropMaterialHeader(
+            backgroundColor: Color(0xFF6C63FF),
+            color: Colors.white,
+            offset: 0, // Header will start right below the App Bar
+          ),
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              summaryAsync.when(
+                data: (stocks) => activitiesAsync.when(
+                  data: (activities) {
+                    if (stocks.isEmpty && totalItemsCount == 0) {
+                      return const SliverFillRemaining(
+                        child: Center(child: Text('ไม่มีข้อมูลสินค้าสำหรับการสรุป')),
+                      );
+                    }
 
-            summaryAsync.when(
-              data: (stocks) => activitiesAsync.when(
-                data: (activities) {
-                  if (stocks.isEmpty && totalItemsCount == 0) {
-                    return const SliverFillRemaining(
-                      child: Center(child: Text('ไม่มีข้อมูลสินค้าสำหรับการสรุป')),
-                    );
-                  }
+                    final totalQty = stocks.fold<int>(0, (sum, item) => sum + item.qty);
+                    final totalValue = stocks.fold<double>(0, (sum, item) => sum + (item.price * item.qty));
+                    final lowStockItems = stocks.where((s) => s.qty < 5 && s.qty > 0).toList();
+                    final outOfStockItems = stocks.where((s) => s.qty == 0).toList();
 
-                  final totalQty = stocks.fold<int>(0, (sum, item) => sum + item.qty);
-                  final totalValue = stocks.fold<double>(0, (sum, item) => sum + (item.price * item.qty));
-                  final lowStockItems = stocks.where((s) => s.qty < 5 && s.qty > 0).toList();
-                  final outOfStockItems = stocks.where((s) => s.qty == 0).toList();
+                    final Map<String, List<StockActivity>> dateActivities = {};
+                    for (var activity in activities) {
+                      final dateStr = DateFormat('yyyy-MM-dd').format(activity.timestamp);
+                      dateActivities.putIfAbsent(dateStr, () => []).add(activity);
+                    }
+                    final sortedDates = dateActivities.keys.toList()..sort((a, b) => b.compareTo(a));
 
-                  final Map<String, List<StockActivity>> dateActivities = {};
-                  for (var activity in activities) {
-                    final dateStr = DateFormat('yyyy-MM-dd').format(activity.timestamp);
-                    dateActivities.putIfAbsent(dateStr, () => []).add(activity);
-                  }
-                  final sortedDates = dateActivities.keys.toList()..sort((a, b) => b.compareTo(a));
+                    return SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Key Metrics Section
+                            _buildSectionHeader('สถานะคลังสินค้า', 'ข้อมูลล่าสุด ณ วันที่ ${DateFormat('d MMMM yyyy', 'th_TH').format(DateTime.now())}'),
+                            const SizedBox(height: 16),
+                            _buildMetricsGrid(totalValue, totalItemsCount, totalQty, activities),
+                            
+                            const SizedBox(height: 32),
+                            
+                            // Health Monitoring
+                            _buildSectionHeader('รายการที่ต้องเติมสินค้า', 'พบ ${outOfStockItems.length + lowStockItems.length} รายการที่ต้องระวัง'),
+                            const SizedBox(height: 16),
+                            if (outOfStockItems.isEmpty && lowStockItems.isEmpty)
+                              _buildCleanState()
+                            else
+                              _buildRestockCarousel([...outOfStockItems, ...lowStockItems]),
 
-                  return SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Key Metrics Section
-                          _buildSectionHeader('สถานะคลังสินค้า', 'ข้อมูลล่าสุด'),
-                          const SizedBox(height: 16),
-                          _buildMetricsGrid(totalValue, totalItemsCount, totalQty, activities),
-                          
-                          const SizedBox(height: 32),
-                          
-                          // Health Monitoring
-                          _buildSectionHeader('รายการที่ต้องเติมสินค้า', 'พบ ${outOfStockItems.length + lowStockItems.length} รายการที่ต้องระวัง'),
-                          const SizedBox(height: 16),
-                          if (outOfStockItems.isEmpty && lowStockItems.isEmpty)
-                            _buildCleanState()
-                          else
-                            _buildRestockCarousel([...outOfStockItems, ...lowStockItems]),
+                            const SizedBox(height: 32),
 
-                          const SizedBox(height: 32),
-
-                          // Activity Log
-                          _buildSectionHeader('ประวัติกิจกรรมรายวัน', 'บันทึกย้อนหลัง ${sortedDates.length} วัน'),
-                          const SizedBox(height: 16),
-                          if (sortedDates.isEmpty)
-                            _buildEmptyLog()
-                          else
-                            ListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              padding: const EdgeInsets.symmetric(horizontal: 20),
-                              itemCount: sortedDates.length,
-                              itemBuilder: (context, index) {
-                                final dateKey = sortedDates[index];
-                                final date = DateTime.parse(dateKey);
-                                return _buildActivityDateTile(context, date, dateActivities[dateKey]!);
-                              },
-                            ),
-                          const SizedBox(height: 100),
-                        ],
+                            // Activity Log
+                            _buildSectionHeader('ประวัติกิจกรรมรายวัน', 'บันทึกย้อนหลัง ${sortedDates.length} วัน'),
+                            const SizedBox(height: 16),
+                            if (sortedDates.isEmpty)
+                              _buildEmptyLog()
+                            else
+                              ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                padding: const EdgeInsets.symmetric(horizontal: 20),
+                                itemCount: sortedDates.length,
+                                itemBuilder: (context, index) {
+                                  final dateKey = sortedDates[index];
+                                  final date = DateTime.parse(dateKey);
+                                  return _buildActivityDateTile(context, date, dateActivities[dateKey]!);
+                                },
+                              ),
+                            const SizedBox(height: 100),
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                  loading: () => const SliverFillRemaining(child: Center(child: CircularProgressIndicator())),
+                  error: (e, s) => SliverFillRemaining(child: Center(child: Text('ข้อผิดพลาด: $e'))),
+                ),
                 loading: () => const SliverFillRemaining(child: Center(child: CircularProgressIndicator())),
                 error: (e, s) => SliverFillRemaining(child: Center(child: Text('ข้อผิดพลาด: $e'))),
               ),
-              loading: () => const SliverFillRemaining(child: Center(child: CircularProgressIndicator())),
-              error: (e, s) => SliverFillRemaining(child: Center(child: Text('ข้อผิดพลาด: $e'))),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

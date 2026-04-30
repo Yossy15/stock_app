@@ -187,7 +187,7 @@ class _StockHistoryPageState extends ConsumerState<StockHistoryPage> {
   Widget _buildActivityCard(StockActivity activity) {
     final color = _getActivityColor(activity.type);
     final isIncrease = activity.diff > 0;
-    final timeStr = DateFormat('HH:mm').format(activity.timestamp);
+    final timeStr = DateFormat('HH:mm').format(activity.timestamp.toLocal());
 
     return Container(
       padding: const EdgeInsets.all(16),
