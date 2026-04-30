@@ -4,6 +4,7 @@ import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:stock_management_system/features/stock/providers/stock_provider.dart';
 import 'package:intl/intl.dart';
 import 'stock_daily_items_page.dart';
+import 'stock_monthly_activities_page.dart';
 
 class StockDashboardPage extends ConsumerStatefulWidget {
   const StockDashboardPage({super.key});
@@ -95,12 +96,12 @@ class _StockDashboardPageState extends ConsumerState<StockDashboardPage> {
                     final lowStockItems = stocks.where((s) => s.qty < 5 && s.qty > 0).toList();
                     final outOfStockItems = stocks.where((s) => s.qty == 0).toList();
 
-                    final Map<String, List<StockActivity>> dateActivities = {};
+                    final Map<String, List<StockActivity>> monthlyActivities = {};
                     for (var activity in activities) {
-                      final dateStr = DateFormat('yyyy-MM-dd').format(activity.timestamp);
-                      dateActivities.putIfAbsent(dateStr, () => []).add(activity);
+                      final monthStr = DateFormat('yyyy-MM').format(activity.timestamp);
+                      monthlyActivities.putIfAbsent(monthStr, () => []).add(activity);
                     }
-                    final sortedDates = dateActivities.keys.toList()..sort((a, b) => b.compareTo(a));
+                    final sortedMonths = monthlyActivities.keys.toList()..sort((a, b) => b.compareTo(a));
 
                     return SliverToBoxAdapter(
                       child: Padding(
@@ -126,20 +127,19 @@ class _StockDashboardPageState extends ConsumerState<StockDashboardPage> {
                             const SizedBox(height: 32),
 
                             // Activity Log
-                            _buildSectionHeader('ประวัติกิจกรรมรายวัน', 'บันทึกย้อนหลัง ${sortedDates.length} วัน'),
+                            _buildSectionHeader('ประวัติกิจกรรมรายเดือน', 'บันทึกย้อนหลัง ${sortedMonths.length} เดือน'),
                             const SizedBox(height: 16),
-                            if (sortedDates.isEmpty)
+                            if (sortedMonths.isEmpty)
                               _buildEmptyLog()
                             else
                               ListView.builder(
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
                                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                                itemCount: sortedDates.length,
+                                itemCount: sortedMonths.length,
                                 itemBuilder: (context, index) {
-                                  final dateKey = sortedDates[index];
-                                  final date = DateTime.parse(dateKey);
-                                  return _buildActivityDateTile(context, date, dateActivities[dateKey]!);
+                                  final monthKey = sortedMonths[index];
+                                  return _buildActivityMonthTile(context, monthKey, monthlyActivities[monthKey]!);
                                 },
                               ),
                             const SizedBox(height: 100),
@@ -281,9 +281,10 @@ class _StockDashboardPageState extends ConsumerState<StockDashboardPage> {
     );
   }
 
-  Widget _buildActivityDateTile(BuildContext context, DateTime date, List<StockActivity> items) {
-    final uniqueItems = items.map((a) => a.stockId).toSet().length;
-    final dateDisplay = DateFormat('EEEEที่ d MMMM', 'th_TH').format(date);
+  Widget _buildActivityMonthTile(BuildContext context, String monthKey, List<StockActivity> items) {
+    final monthDate = DateTime.parse('$monthKey-01');
+    final monthDisplay = DateFormat('MMMM yyyy', 'th_TH').format(monthDate);
+    final uniqueDays = items.map((a) => a.timestamp.day).toSet().length;
     
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -298,12 +299,12 @@ class _StockDashboardPageState extends ConsumerState<StockDashboardPage> {
         leading: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(color: const Color(0xFF6C63FF).withOpacity(0.1), shape: BoxShape.circle),
-          child: const Icon(Icons.history_edu_rounded, color: Color(0xFF6C63FF), size: 24),
+          child: const Icon(Icons.calendar_month_rounded, color: Color(0xFF6C63FF), size: 24),
         ),
-        title: Text(dateDisplay, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        subtitle: Text('อัปเดตสินค้า $uniqueItems รายการ (${items.length} กิจกรรม)', style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+        title: Text(monthDisplay, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        subtitle: Text('มีการเคลื่อนไหว $uniqueDays วัน (${items.length} กิจกรรม)', style: TextStyle(color: Colors.grey[500], fontSize: 12)),
         trailing: Icon(Icons.arrow_forward_ios_rounded, color: Colors.grey[300], size: 16),
-        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => StockDailyItemsPage(date: date))),
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => StockMonthlyActivitiesPage(month: monthDate))),
       ),
     );
   }

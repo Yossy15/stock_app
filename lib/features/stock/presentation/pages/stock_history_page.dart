@@ -21,7 +21,8 @@ class StockHistoryPage extends ConsumerStatefulWidget {
 }
 
 class _StockHistoryPageState extends ConsumerState<StockHistoryPage> {
-  final RefreshController _refreshController = RefreshController(initialRefresh: false);
+  final RefreshController _refreshController =
+      RefreshController(initialRefresh: false);
 
   void _onRefresh() async {
     ref.invalidate(stockActivitiesProvider);
@@ -45,7 +46,9 @@ class _StockHistoryPageState extends ConsumerState<StockHistoryPage> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(widget.stockName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(widget.stockName,
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             if (widget.dateFilter != null)
               Text(
                 'ประวัติเมื่อ ${DateFormat('d MMMM yyyy', 'th_TH').format(widget.dateFilter!)}',
@@ -78,8 +81,7 @@ class _StockHistoryPageState extends ConsumerState<StockHistoryPage> {
             final itemActivities = activities.where((a) {
               bool matchItem = a.stockId == widget.stockId;
               if (widget.dateFilter != null) {
-                bool matchDate =
-                    a.timestamp.year == widget.dateFilter!.year &&
+                bool matchDate = a.timestamp.year == widget.dateFilter!.year &&
                     a.timestamp.month == widget.dateFilter!.month &&
                     a.timestamp.day == widget.dateFilter!.day;
                 return matchItem && matchDate;
@@ -119,12 +121,14 @@ class _StockHistoryPageState extends ConsumerState<StockHistoryPage> {
                     totalPriceAdded,
                     totalPriceReduced,
                     totalNetPrice,
+                    itemActivities.first.finalQty,
                   ),
                 ),
               ],
             );
           },
-          loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFF6C63FF))),
+          loading: () => const Center(
+              child: CircularProgressIndicator(color: Color(0xFF6C63FF))),
           error: (e, s) => Center(child: Text('ข้อผิดพลาด: $e')),
         ),
       ),
@@ -139,7 +143,7 @@ class _StockHistoryPageState extends ConsumerState<StockHistoryPage> {
       itemBuilder: (context, index) {
         final activity = itemActivities[index];
         final isLast = index == itemActivities.length - 1;
-        
+
         return IntrinsicHeight(
           child: Row(
             children: [
@@ -154,7 +158,8 @@ class _StockHistoryPageState extends ConsumerState<StockHistoryPage> {
                       border: Border.all(color: Colors.white, width: 2),
                       boxShadow: [
                         BoxShadow(
-                          color: _getActivityColor(activity.type).withOpacity(0.4),
+                          color:
+                              _getActivityColor(activity.type).withOpacity(0.4),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
@@ -209,10 +214,24 @@ class _StockHistoryPageState extends ConsumerState<StockHistoryPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                _getStatusTitle(activity.type),
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: color),
+                _getStatusTitle(activity.type) + " (${activity.performer})",
+                style: TextStyle(
+                    fontWeight: FontWeight.bold, fontSize: 14, color: color),
               ),
-              Text('$timeStr น.', style: TextStyle(color: Colors.grey[400], fontSize: 12)),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text('$timeStr น.',
+                      style: TextStyle(color: Colors.grey[400], fontSize: 12)),
+                  Text(
+                    activity.performer,
+                    style: TextStyle(
+                        color: Colors.grey[400],
+                        fontSize: 10,
+                        fontStyle: FontStyle.italic),
+                  ),
+                ],
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -223,17 +242,26 @@ class _StockHistoryPageState extends ConsumerState<StockHistoryPage> {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w900,
-                  color: isIncrease ? Colors.green : (activity.diff < 0 ? Colors.red : Colors.blue),
+                  color: isIncrease
+                      ? Colors.green
+                      : (activity.diff < 0 ? Colors.red : Colors.blue),
                 ),
               ),
               const SizedBox(width: 4),
-              Text('ชิ้น', style: TextStyle(color: Colors.grey[400], fontSize: 12, fontWeight: FontWeight.bold)),
+              Text('ชิ้น',
+                  style: TextStyle(
+                      color: Colors.grey[400],
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold)),
               const Spacer(),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text('คงเหลือ', style: TextStyle(color: Colors.grey[400], fontSize: 10)),
-                  Text('${activity.finalQty}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  Text('คงเหลือ',
+                      style: TextStyle(color: Colors.grey[400], fontSize: 10)),
+                  Text('${activity.finalQty}',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 16)),
                 ],
               ),
             ],
@@ -244,7 +272,8 @@ class _StockHistoryPageState extends ConsumerState<StockHistoryPage> {
               children: [
                 Icon(Icons.sell_outlined, size: 12, color: Colors.grey[400]),
                 const SizedBox(width: 4),
-                Text('ราคาขณะทำรายการ: ฿${activity.price}', style: TextStyle(color: Colors.grey[500], fontSize: 11)),
+                Text('ราคาขณะทำรายการ: ฿${activity.price}',
+                    style: TextStyle(color: Colors.grey[500], fontSize: 11)),
               ],
             ),
           ],
@@ -253,13 +282,20 @@ class _StockHistoryPageState extends ConsumerState<StockHistoryPage> {
     );
   }
 
-  Widget _buildBottomSummary(int added, int reduced, double pAdd, double pRed, double net) {
+  Widget _buildBottomSummary(int added, int reduced, double pAdd, double pRed,
+      double net, int latestQty) {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: const BorderRadius.only(topLeft: Radius.circular(32), topRight: Radius.circular(32)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 20, offset: const Offset(0, -5))],
+        borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(32), topRight: Radius.circular(32)),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 20,
+              offset: const Offset(0, -5))
+        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -273,21 +309,34 @@ class _StockHistoryPageState extends ConsumerState<StockHistoryPage> {
           ),
           const SizedBox(height: 20),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('สรุปมูลค่ารวม', style: TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.w500)),
-                  Text('ผลกระทบทางการเงิน', style: TextStyle(color: Colors.grey, fontSize: 10)),
-                ],
-              ),
-              Text(
-                '฿${NumberFormat('#,###.##').format(net)}',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: net >= 0 ? Colors.green : Colors.red),
-              ),
+              _buildSummaryPill('คงเหลือสุทธิ: $latestQty', Colors.blue),
             ],
           ),
+          // Row(
+          //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //   children: [
+          //     const Column(
+          //       crossAxisAlignment: CrossAxisAlignment.start,
+          //       children: [
+          //         Text('สรุปมูลค่ารวม',
+          //             style: TextStyle(
+          //                 color: Colors.grey,
+          //                 fontSize: 12,
+          //                 fontWeight: FontWeight.w500)),
+          //         Text('ผลกระทบทางการเงิน',
+          //             style: TextStyle(color: Colors.grey, fontSize: 10)),
+          //       ],
+          //     ),
+          //     Text(
+          //       '฿${NumberFormat('#,###.##').format(net)}',
+          //       style: TextStyle(
+          //           fontSize: 28,
+          //           fontWeight: FontWeight.bold,
+          //           color: net >= 0 ? Colors.green : Colors.red),
+          //     ),
+          //   ],
+          // ),
         ],
       ),
     );
@@ -302,7 +351,10 @@ class _StockHistoryPageState extends ConsumerState<StockHistoryPage> {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: color.withOpacity(0.1)),
         ),
-        child: Text(text, textAlign: TextAlign.center, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 14)),
+        child: Text(text,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+                color: color, fontWeight: FontWeight.bold, fontSize: 14)),
       ),
     );
   }
@@ -314,7 +366,11 @@ class _StockHistoryPageState extends ConsumerState<StockHistoryPage> {
         children: [
           Icon(Icons.history_rounded, size: 80, color: Colors.grey[200]),
           const SizedBox(height: 16),
-          const Text('ไม่พบข้อมูลความเคลื่อนไหว', style: TextStyle(color: Colors.grey, fontSize: 16, fontWeight: FontWeight.w500)),
+          const Text('ไม่พบข้อมูลความเคลื่อนไหว',
+              style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500)),
         ],
       ),
     );
@@ -322,19 +378,27 @@ class _StockHistoryPageState extends ConsumerState<StockHistoryPage> {
 
   Color _getActivityColor(ActivityType type) {
     switch (type) {
-      case ActivityType.create: return Colors.blue;
-      case ActivityType.update: return Colors.orange;
-      case ActivityType.delete: return Colors.red;
-      case ActivityType.qtyChange: return const Color(0xFF6C63FF);
+      case ActivityType.create:
+        return Colors.blue;
+      case ActivityType.update:
+        return Colors.orange;
+      case ActivityType.delete:
+        return Colors.red;
+      case ActivityType.qtyChange:
+        return const Color(0xFF6C63FF);
     }
   }
 
   String _getStatusTitle(ActivityType type) {
     switch (type) {
-      case ActivityType.create: return 'เริ่มรายการ';
-      case ActivityType.update: return 'แก้ไขข้อมูล';
-      case ActivityType.delete: return 'ลบรายการ';
-      case ActivityType.qtyChange: return 'ปรับปรุงสต็อก';
+      case ActivityType.create:
+        return 'เริ่มรายการ';
+      case ActivityType.update:
+        return 'แก้ไขข้อมูล';
+      case ActivityType.delete:
+        return 'ลบรายการ';
+      case ActivityType.qtyChange:
+        return 'ปรับปรุงสต็อก';
     }
   }
 }

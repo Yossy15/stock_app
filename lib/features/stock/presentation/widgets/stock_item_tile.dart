@@ -152,8 +152,11 @@ class StockItemTile extends ConsumerWidget {
   }
 
   Future<void> _increaseQty(BuildContext context, WidgetRef ref) async {
+    final performer = await _showPerformerDialog(context, 'เพิ่มจำนวน');
+    if (performer == null || performer.isEmpty) return;
+
     try {
-      await ref.read(stockListProvider.notifier).updateStockQty(stock.id, stock.qty + 1);
+      await ref.read(stockListProvider.notifier).updateStockQty(stock.id, stock.qty + 1, performer: performer);
       ToastUtils.showSuccess('เพิ่มจำนวน "${stock.name}"');
     } catch (e) {
       ToastUtils.showError('ไม่สามารถอัปเดตได้: $e');
@@ -161,12 +164,61 @@ class StockItemTile extends ConsumerWidget {
   }
 
   Future<void> _decreaseQty(BuildContext context, WidgetRef ref) async {
+    final performer = await _showPerformerDialog(context, 'ลดจำนวน');
+    if (performer == null || performer.isEmpty) return;
+
     try {
-      await ref.read(stockListProvider.notifier).updateStockQty(stock.id, stock.qty - 1);
+      await ref.read(stockListProvider.notifier).updateStockQty(stock.id, stock.qty - 1, performer: performer);
       ToastUtils.showSuccess('ลดจำนวน "${stock.name}"');
     } catch (e) {
       ToastUtils.showError('ไม่สามารถอัปเดตได้: $e');
     }
+  }
+
+  Future<String?> _showPerformerDialog(BuildContext context, String action) async {
+    final controller = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    return showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text(action, style: const TextStyle(fontWeight: FontWeight.bold)),
+        content: Form(
+          key: formKey,
+          child: TextFormField(
+            controller: controller,
+            autofocus: true,
+            decoration: InputDecoration(
+              labelText: 'ชื่อผู้ทำรายการ',
+              hintText: 'กรุณาระบุชื่อของคุณ',
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+              prefixIcon: const Icon(Icons.person_outline_rounded),
+            ),
+            validator: (value) => (value == null || value.trim().isEmpty) ? 'กรุณากรอกชื่อ' : null,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('ยกเลิก', style: TextStyle(color: Colors.grey[600])),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF6C63FF),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () {
+              if (formKey.currentState!.validate()) {
+                Navigator.pop(context, controller.text.trim());
+              }
+            },
+            child: const Text('ตกลง'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showEditDialog(BuildContext context) {
@@ -199,10 +251,15 @@ class StockItemTile extends ConsumerWidget {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             onPressed: () async {
+              final performer = await _showPerformerDialog(context, 'ลบสินค้า');
+              if (performer == null || performer.isEmpty) return;
+
               try {
-                await ref.read(stockListProvider.notifier).deleteStock(stock.id);
+                await ref.read(stockListProvider.notifier).deleteStock(stock.id, performer: performer);
                 ToastUtils.showSuccess('ลบ "${stock.name}" สำเร็จ');
-                if (context.mounted) Navigator.pop(context);
+                if (context.mounted) {
+                  Navigator.pop(context); // Close delete confirmation
+                }
               } catch (e) {
                 ToastUtils.showError('ลบไม่สำเร็จ: $e');
               }

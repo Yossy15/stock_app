@@ -16,7 +16,6 @@ enum ActivityType {
   delete,
   qtyChange,
 }
-
 class StockActivity {
   final String id;
   final String stockId;
@@ -26,6 +25,7 @@ class StockActivity {
   final int finalQty;
   final double price; // Price at the time of activity
   final DateTime timestamp;
+  final String performer;
 
   StockActivity({
     required this.id,
@@ -36,6 +36,7 @@ class StockActivity {
     required this.finalQty,
     required this.price,
     required this.timestamp,
+    required this.performer,
   });
 
   factory StockActivity.fromJson(Map<String, dynamic> json) {
@@ -57,6 +58,7 @@ class StockActivity {
       finalQty: json['finalQty'] ?? 0,
       price: (json['price'] as num?)?.toDouble() ?? 0.0,
       timestamp: DateTime.parse(json['timestamp']),
+      performer: json['performer'] ?? 'System',
     );
   }
 }
@@ -188,7 +190,7 @@ class StockList extends _$StockList {
   }
 
   // Create
-  Future<void> addStock(String name, int qty, double price) async {
+  Future<void> addStock(String name, int qty, double price, {String? performer}) async {
     final repository = ref.read(stockRepositoryProvider);
     final previousState = state.value ?? [];
 
@@ -203,7 +205,7 @@ class StockList extends _$StockList {
     state = AsyncValue<List<Stock>>.data([tempStock, ...previousState]);
 
     try {
-      await repository.createStock(name, qty, price);
+      await repository.createStock(name, qty, price, performer: performer);
       await refresh();
     } catch (e) {
       state = AsyncValue<List<Stock>>.data(previousState);
@@ -213,7 +215,7 @@ class StockList extends _$StockList {
 
   // Update
   Future<void> updateStock(String id,
-      {String? name, int? qty, double? price}) async {
+      {String? name, int? qty, double? price, String? performer}) async {
     final repository = ref.read(stockRepositoryProvider);
     final previousState = state.value ?? [];
 
@@ -237,6 +239,7 @@ class StockList extends _$StockList {
         if (name != null) 'name': name,
         if (qty != null) 'qty': qty,
         if (price != null) 'price': price,
+        if (performer != null) 'performer': performer,
       });
 
       ref.invalidate(stockSummaryProvider);
@@ -247,7 +250,7 @@ class StockList extends _$StockList {
     }
   }
 
-  Future<void> updateStockQty(String id, int newQty) async {
+  Future<void> updateStockQty(String id, int newQty, {String? performer}) async {
     final previousState = state.value ?? [];
 
     state = AsyncValue<List<Stock>>.data(
@@ -258,7 +261,10 @@ class StockList extends _$StockList {
     );
 
     try {
-      await ref.read(stockRepositoryProvider).updateStock(id, {'qty': newQty});
+      await ref.read(stockRepositoryProvider).updateStock(id, {
+        'qty': newQty,
+        if (performer != null) 'performer': performer,
+      });
       ref.invalidate(stockSummaryProvider);
       ref.invalidate(stockActivitiesProvider);
     } catch (e) {
@@ -267,7 +273,7 @@ class StockList extends _$StockList {
     }
   }
 
-  Future<void> deleteStock(String id) async {
+  Future<void> deleteStock(String id, {String? performer}) async {
     final previousState = state.value ?? [];
 
     state = AsyncValue<List<Stock>>.data(
@@ -275,7 +281,7 @@ class StockList extends _$StockList {
     );
 
     try {
-      await ref.read(stockRepositoryProvider).deleteStock(id);
+      await ref.read(stockRepositoryProvider).deleteStock(id, performer: performer);
       ref.read(stockTotalCountProvider.notifier).update(ref.read(stockTotalCountProvider) - 1);
       ref.invalidate(stockSummaryProvider);
       ref.invalidate(stockActivitiesProvider);

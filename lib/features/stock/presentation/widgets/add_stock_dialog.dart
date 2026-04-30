@@ -35,6 +35,9 @@ class AddStockDialog extends ConsumerWidget {
     'price': FormControl<double>(
       validators: [Validators.required, Validators.min(0)],
     ),
+    'performer': FormControl<String>(
+      validators: [Validators.required],
+    ),
   });
 
   @override
@@ -159,6 +162,22 @@ class AddStockDialog extends ConsumerWidget {
                   ),
                 ],
               ),
+              const SizedBox(height: 20),
+              ReactiveTextField<String>(
+                formControlName: 'performer',
+                validationMessages: {
+                  ValidationMessage.required: (error) => 'กรุณากรอกชื่อผู้ทำรายการ',
+                },
+                decoration: InputDecoration(
+                  labelText: 'ชื่อผู้ทำรายการ',
+                  prefixIcon: const Icon(Icons.person_outline_rounded),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                ),
+              ),
               const SizedBox(height: 40),
               SizedBox(
                 width: double.infinity,
@@ -203,9 +222,10 @@ class AddStockDialog extends ConsumerWidget {
     final name = form.control('name').value as String;
     final qty = form.control('qty').value as int;
     final price = (form.control('price').value as num).toDouble();
+    final performer = form.control('performer').value as String;
 
     try {
-      await ref.read(stockListProvider.notifier).addStock(name, qty, price);
+      await ref.read(stockListProvider.notifier).addStock(name, qty, price, performer: performer);
       ToastUtils.showSuccess('เพิ่มสินค้า "$name" สำเร็จ');
       if (context.mounted) Navigator.pop(context);
     } catch (e) {

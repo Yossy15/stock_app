@@ -45,6 +45,9 @@ class EditStockDialog extends ConsumerWidget {
       value: stock.price,
       validators: [Validators.required, Validators.min(0)],
     ),
+    'performer': FormControl<String>(
+      validators: [Validators.required],
+    ),
   });
 
   @override
@@ -168,6 +171,23 @@ class EditStockDialog extends ConsumerWidget {
                   ),
                 ],
               ),
+              const SizedBox(height: 20),
+              ReactiveTextField<String>(
+                formControlName: 'performer',
+                validationMessages: {
+                  ValidationMessage.required: (error) => 'กรุณากรอกชื่อผู้ทำรายการ',
+                },
+                decoration: InputDecoration(
+                  labelText: 'ชื่อผู้ทำรายการ',
+                  hintText: 'ระบุชื่อของคุณที่ทำการแก้ไข',
+                  prefixIcon: const Icon(Icons.person_outline_rounded),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                ),
+              ),
               const SizedBox(height: 40),
               SizedBox(
                 width: double.infinity,
@@ -212,11 +232,12 @@ class EditStockDialog extends ConsumerWidget {
     final name = form.control('name').value as String;
     final qty = form.control('qty').value as int;
     final price = (form.control('price').value as num).toDouble();
+    final performer = form.control('performer').value as String;
 
     try {
       await ref
           .read(stockListProvider.notifier)
-          .updateStock(stock.id, name: name, qty: qty, price: price);
+          .updateStock(stock.id, name: name, qty: qty, price: price, performer: performer);
       ToastUtils.showSuccess('แก้ไขข้อมูล "${stock.name}" สำเร็จ');
       if (context.mounted) Navigator.pop(context);
     } catch (e) {

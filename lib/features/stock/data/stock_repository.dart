@@ -34,11 +34,12 @@ class StockRepository {
     };
   }
 
-  Future<Stock> createStock(String name, int qty, double price) async {
+  Future<Stock> createStock(String name, int qty, double price, {String? performer}) async {
     final response = await _dio.post('/stock', data: {
       'name': name,
       'qty': qty,
       'price': price,
+      if (performer != null) 'performer': performer,
     });
     return Stock.fromJson(response.data);
   }
@@ -48,8 +49,10 @@ class StockRepository {
     return Stock.fromJson(response.data);
   }
 
-  Future<void> deleteStock(String id) async {
-    await _dio.delete('/stock/$id');
+  Future<void> deleteStock(String id, {String? performer}) async {
+    await _dio.delete('/stock/$id', data: {
+      if (performer != null) 'performer': performer,
+    });
   }
 
   Future<List<Map<String, dynamic>>> getActivities() async {

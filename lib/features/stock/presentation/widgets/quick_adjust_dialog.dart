@@ -15,6 +15,10 @@ class QuickAdjustDialog extends ConsumerWidget {
           value: 1,
           validators: [Validators.required, Validators.min(1)],
         ),
+        'performer': FormControl<String>(
+          value: '',
+          validators: [Validators.required],
+        ),
       });
 
   @override
@@ -23,7 +27,8 @@ class QuickAdjustDialog extends ConsumerWidget {
       form: () => form,
       builder: (context, form, child) {
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
           elevation: 0,
           backgroundColor: Colors.transparent,
           child: Container(
@@ -56,7 +61,7 @@ class QuickAdjustDialog extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 20),
-                
+
                 Text(
                   stock.name,
                   style: const TextStyle(
@@ -77,6 +82,24 @@ class QuickAdjustDialog extends ConsumerWidget {
                 ),
                 const SizedBox(height: 28),
 
+                ReactiveTextField<String>(
+                  formControlName: 'performer',
+                  textInputAction: TextInputAction.done,
+                  decoration: InputDecoration(
+                    labelText: 'ชื่อผู้ทำรายการ',
+                    hintText: 'ระบุชื่อของคุณ',
+                    prefixIcon: const Icon(Icons.person_outline_rounded),
+                    filled: true,
+                    fillColor: Colors.grey[50],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
                 // Input Field with Focus
                 ReactiveTextField<int>(
                   formControlName: 'amount',
@@ -96,12 +119,16 @@ class QuickAdjustDialog extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(20),
                       borderSide: BorderSide.none,
                     ),
-                    prefixIcon: const Icon(Icons.edit_outlined, color: Colors.grey),
+                    prefixIcon:
+                        const Icon(Icons.edit_outlined, color: Colors.grey),
                     suffixIcon: const Padding(
                       padding: EdgeInsets.only(right: 16),
                       child: Center(
                         widthFactor: 1,
-                        child: Text('ชิ้น', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                        child: Text('ชิ้น',
+                            style: TextStyle(
+                                color: Colors.grey,
+                                fontWeight: FontWeight.bold)),
                       ),
                     ),
                     hintText: '0',
@@ -110,9 +137,9 @@ class QuickAdjustDialog extends ConsumerWidget {
                     // select all text on tap to make editing easier
                   },
                 ),
-                
-                const SizedBox(height: 20),
-                
+
+                const SizedBox(height: 16),
+
                 // Live Preview Indicator
                 ReactiveValueListenableBuilder<int>(
                   formControlName: 'amount',
@@ -122,24 +149,19 @@ class QuickAdjustDialog extends ConsumerWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         _buildPreviewChip(
-                          'หากลดเหลือ: ', 
-                          '${stock.qty - amount}', 
-                          Colors.redAccent,
-                          (stock.qty - amount) >= 0
-                        ),
+                            'หากลดเหลือ: ',
+                            '${stock.qty - amount}',
+                            Colors.redAccent,
+                            (stock.qty - amount) >= 0),
                         const SizedBox(width: 8),
-                        _buildPreviewChip(
-                          'หากเพิ่มเป็น: ', 
-                          '${stock.qty + amount}', 
-                          Colors.green,
-                          true
-                        ),
+                        _buildPreviewChip('หากเพิ่มเป็น: ',
+                            '${stock.qty + amount}', Colors.green, true),
                       ],
                     );
                   },
                 ),
-                
-                const SizedBox(height: 32),
+
+                const SizedBox(height: 16),
 
                 // Buttons
                 Row(
@@ -149,7 +171,8 @@ class QuickAdjustDialog extends ConsumerWidget {
                         label: 'ลดสต็อก',
                         icon: Icons.remove_rounded,
                         color: Colors.redAccent,
-                        onPressed: () => _handleAdjust(context, ref, form, isAdd: false),
+                        onPressed: () =>
+                            _handleAdjust(context, ref, form, isAdd: false),
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -158,12 +181,13 @@ class QuickAdjustDialog extends ConsumerWidget {
                         label: 'เพิ่มสต็อก',
                         icon: Icons.add_rounded,
                         color: const Color(0xFF6C63FF),
-                        onPressed: () => _handleAdjust(context, ref, form, isAdd: true),
+                        onPressed: () =>
+                            _handleAdjust(context, ref, form, isAdd: true),
                       ),
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 16),
                 TextButton(
                   onPressed: () => Navigator.pop(context),
@@ -171,7 +195,8 @@ class QuickAdjustDialog extends ConsumerWidget {
                     foregroundColor: Colors.grey[400],
                     minimumSize: const Size(double.infinity, 40),
                   ),
-                  child: const Text('ยกเลิกรายการ', style: TextStyle(fontWeight: FontWeight.w500)),
+                  child: const Text('ยกเลิกรายการ',
+                      style: TextStyle(fontWeight: FontWeight.w500)),
                 ),
               ],
             ),
@@ -181,7 +206,8 @@ class QuickAdjustDialog extends ConsumerWidget {
     );
   }
 
-  Widget _buildPreviewChip(String label, String value, Color color, bool isValid) {
+  Widget _buildPreviewChip(
+      String label, String value, Color color, bool isValid) {
     if (!isValid && color == Colors.redAccent) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -189,7 +215,9 @@ class QuickAdjustDialog extends ConsumerWidget {
           color: Colors.red[50],
           borderRadius: BorderRadius.circular(10),
         ),
-        child: const Text('ยอดติดลบ!', style: TextStyle(color: Colors.red, fontSize: 11, fontWeight: FontWeight.bold)),
+        child: const Text('ยอดติดลบ!',
+            style: TextStyle(
+                color: Colors.red, fontSize: 11, fontWeight: FontWeight.bold)),
       );
     }
     return Container(
@@ -203,14 +231,18 @@ class QuickAdjustDialog extends ConsumerWidget {
           style: TextStyle(color: color.withOpacity(0.7), fontSize: 11),
           children: [
             TextSpan(text: label),
-            TextSpan(text: value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+            TextSpan(
+                text: value,
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
           ],
         ),
       ),
     );
   }
 
-  void _handleAdjust(BuildContext context, WidgetRef ref, FormGroup form, {required bool isAdd}) async {
+  void _handleAdjust(BuildContext context, WidgetRef ref, FormGroup form,
+      {required bool isAdd}) async {
     if (form.valid) {
       final amount = form.control('amount').value as int;
       final newQty = isAdd ? (stock.qty + amount) : (stock.qty - amount);
@@ -221,7 +253,10 @@ class QuickAdjustDialog extends ConsumerWidget {
       }
 
       try {
-        await ref.read(stockListProvider.notifier).updateStockQty(stock.id, newQty);
+        final performer = form.control('performer').value as String;
+        await ref
+            .read(stockListProvider.notifier)
+            .updateStockQty(stock.id, newQty, performer: performer);
         final actionText = isAdd ? 'เพิ่ม' : 'ลด';
         ToastUtils.showSuccess('$actionTextจำนวน "${stock.name}" สำเร็จ');
         if (context.mounted) Navigator.pop(context);
@@ -266,7 +301,8 @@ class _AdjustButton extends StatelessWidget {
           backgroundColor: color,
           foregroundColor: Colors.white,
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           padding: EdgeInsets.zero,
         ),
         onPressed: onPressed,
@@ -275,7 +311,9 @@ class _AdjustButton extends StatelessWidget {
           children: [
             Icon(icon, size: 20),
             const SizedBox(height: 2),
-            Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            Text(label,
+                style:
+                    const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
           ],
         ),
       ),
