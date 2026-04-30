@@ -85,11 +85,6 @@ class _StockDashboardPageState extends ConsumerState<StockDashboardPage> {
               summaryAsync.when(
                 data: (stocks) => activitiesAsync.when(
                   data: (activities) {
-                    if (stocks.isEmpty && totalItemsCount == 0) {
-                      return const SliverFillRemaining(
-                        child: Center(child: Text('ไม่มีข้อมูลสินค้าสำหรับการสรุป')),
-                      );
-                    }
 
                     final totalQty = stocks.fold<int>(0, (sum, item) => sum + item.qty);
                     final totalValue = stocks.fold<double>(0, (sum, item) => sum + (item.price * item.qty));

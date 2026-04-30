@@ -251,11 +251,10 @@ class StockItemTile extends ConsumerWidget {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             onPressed: () async {
-              final performer = await _showPerformerDialog(context, 'ลบสินค้า');
-              if (performer == null || performer.isEmpty) return;
-
               try {
-                await ref.read(stockListProvider.notifier).deleteStock(stock.id, performer: performer);
+                await ref
+                    .read(stockListProvider.notifier)
+                    .deleteStock(stock.id, performer: 'System');
                 ToastUtils.showSuccess('ลบ "${stock.name}" สำเร็จ');
                 if (context.mounted) {
                   Navigator.pop(context); // Close delete confirmation
