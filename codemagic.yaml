@@ -5,9 +5,12 @@ workflows:
     instance_type: mac_mini_m1
     environment:
       groups:
-        # Add your Apple Credentials here in Codemagic UI:
-        # APP_STORE_CONNECT_KEY_IDENTIFIER, APP_STORE_CONNECT_ISSUER_ID, APP_STORE_CONNECT_PRIVATE_KEY
-        - apple_auth 
+        - apple_credentials # Create this group in Codemagic UI and add variables below:
+        # APP_STORE_CONNECT_ISSUER_ID
+        # APP_STORE_CONNECT_KEY_IDENTIFIER
+        # APP_STORE_CONNECT_PRIVATE_KEY (as Secure Variable)
+      vars:
+        BUNDLE_ID: "com.yossy.stock"
       flutter: stable
       xcode: latest
       cocoapods: default
@@ -16,7 +19,7 @@ workflows:
         script: |
           keychain initialize
           # Fetching certificates and profiles from Apple
-          app-store-connect fetch-signing-files "com.yossy.stock" --type IOS_APP_STORE --create
+          app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
           keychain add-certificates
       - name: Get Flutter packages
         script: |
@@ -32,3 +35,19 @@ workflows:
       email:
         recipients:
           - your-email@example.com # Update this
+
+  web-release:
+    name: Web Release Build
+    max_build_duration: 30
+    instance_type: mac_mini_m1
+    environment:
+      flutter: stable
+    scripts:
+      - name: Get Flutter packages
+        script: |
+          flutter pub get
+      - name: Build Web
+        script: |
+          flutter build web --release --web-renderer html
+    artifacts:
+      - build/web/**
