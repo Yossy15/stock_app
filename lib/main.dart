@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'features/stock/presentation/pages/main_wrapper.dart';
+
+class MyCustomScrollBehavior extends MaterialScrollBehavior {
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+      };
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -67,6 +76,7 @@ class StockApp extends StatelessWidget {
           ),
         ),
       ),
+      scrollBehavior: MyCustomScrollBehavior(),
       home: const MainWrapper(),
     );
   }
