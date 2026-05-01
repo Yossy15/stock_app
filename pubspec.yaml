@@ -33,6 +33,8 @@ dependencies:
   pdf: ^3.12.0
   excel: ^4.0.6
   printing: ^5.14.3
+  phosphor_flutter: ^2.1.0
+  flutter_animate: ^4.5.2
 
 dev_dependencies:
   flutter_test:

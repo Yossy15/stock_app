@@ -2,14 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:stock_management_system/features/stock/presentation/pages/stock_history_page.dart';
 import 'package:stock_management_system/features/stock/providers/stock_provider.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:stock_management_system/core/services/export_service.dart';
 import 'package:stock_management_system/features/stock/presentation/pages/pdf_viewer_page.dart';
+import 'package:stock_management_system/core/utils/toast_utils.dart';
 import 'package:printing/printing.dart';
 import 'stock_daily_items_page.dart';
 import 'dart:typed_data';
+import 'package:stock_management_system/core/theme/ui_constants.dart';
+import 'package:stock_management_system/core/widgets/common_widgets.dart';
 
 class StockMonthlyActivitiesPage extends ConsumerStatefulWidget {
   final DateTime month;
@@ -45,22 +50,14 @@ class _StockMonthlyActivitiesPageState
 
   @override
   Widget build(BuildContext context) {
+    ToastUtils.init(context);
     final activitiesAsync = ref.watch(stockActivitiesProvider);
     final monthDisplay = DateFormat('MMMM yyyy', 'th_TH').format(widget.month);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FE),
-      appBar: AppBar(
-        title: Text('ประวัติของเดือน $monthDisplay',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        backgroundColor: const Color(0xFF6C63FF),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () => Navigator.pop(context),
-        ),
+      backgroundColor: kSurface,
+      appBar: AppAppBar(
+        title: 'ประวัติของเดือน $monthDisplay',
         actions: [
           activitiesAsync.when(
             data: (activities) {
@@ -74,7 +71,7 @@ class _StockMonthlyActivitiesPageState
               return Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.picture_as_pdf_rounded, size: 20),
+                    icon: Icon(PhosphorIcons.filePdf(), size: 20),
                     onPressed: () =>
                         _viewPdf(context, monthActivities, monthDisplay),
                     tooltip: 'ดู PDF',
@@ -82,8 +79,8 @@ class _StockMonthlyActivitiesPageState
                   _buildExportDropdown(context, monthActivities, monthDisplay),
                   IconButton(
                     icon: Icon(_isAllExpanded
-                        ? Icons.unfold_less_rounded
-                        : Icons.unfold_more_rounded),
+                        ? PhosphorIcons.arrowsInLineVertical()
+                        : PhosphorIcons.arrowsOutLineVertical()),
                     onPressed: () {
                       setState(() {
                         _isAllExpanded = !_isAllExpanded;
@@ -105,13 +102,9 @@ class _StockMonthlyActivitiesPageState
         children: [
           _buildSearchBar(),
           Expanded(
-            child: SmartRefresher(
+            child: AppRefresher(
               controller: _refreshController,
               onRefresh: _onRefresh,
-              header: const WaterDropMaterialHeader(
-                backgroundColor: Color(0xFF6C63FF),
-                color: Colors.white,
-              ),
               child: activitiesAsync.when(
                 data: (activities) {
                   final monthActivities = activities.where((a) {
@@ -140,16 +133,16 @@ class _StockMonthlyActivitiesPageState
                         child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.search_off_rounded,
+                        Icon(PhosphorIcons.magnifyingGlassMinus(PhosphorIconsStyle.light),
                             size: 80, color: Colors.grey[200]),
                         const SizedBox(height: 16),
                         Text(
                             _searchQuery.isEmpty
                                 ? 'ไม่มีประวัติกิจกรรมในเดือนนี้'
                                 : 'ไม่พบรายการที่ตรงกับ "$_searchQuery"',
-                            style: const TextStyle(color: Colors.grey)),
+                            style: const TextStyle(color: kTextSub)),
                       ],
-                    ));
+                    ).animate().fade().scale(begin: const Offset(0.9, 0.9)));
                   }
 
                   return ListView.builder(
@@ -160,13 +153,26 @@ class _StockMonthlyActivitiesPageState
                       final dateKey = sortedDates[index];
                       final date = DateTime.parse(dateKey);
                       return _buildActivityDateTile(
-                          context, date, dateActivities[dateKey]!);
+                          context, date, dateActivities[dateKey]!)
+                          .animate(delay: (index * 50).ms)
+                          .fadeIn(duration: 400.ms)
+                          .slideX(begin: 0.05, end: 0);
                     },
                   );
                 },
-                loading: () => const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF6C63FF))),
-                error: (e, s) => Center(child: Text('ข้อผิดพลาด: $e')),
+                loading: () => const Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      AppShimmer(height: 80, borderRadius: kCardRadius),
+                      SizedBox(height: 12),
+                      AppShimmer(height: 80, borderRadius: kCardRadius),
+                      SizedBox(height: 12),
+                      AppShimmer(height: 80, borderRadius: kCardRadius),
+                    ],
+                  ),
+                ),
+                error: (e, s) => AppErrorState(onRetry: _onRefresh),
               ),
             ),
           ),
@@ -188,7 +194,7 @@ class _StockMonthlyActivitiesPageState
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircularProgressIndicator(color: Color(0xFF6C63FF)),
+              const CircularProgressIndicator(color: kPrimary),
               SizedBox(height: 16),
               Text('กำลังสร้างไฟล์ PDF...',
                   style: TextStyle(fontWeight: FontWeight.bold)),
@@ -218,10 +224,7 @@ class _StockMonthlyActivitiesPageState
     } catch (e) {
       if (context.mounted) {
         Navigator.pop(context); // Close loading dialog
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('ไม่สามารถสร้าง PDF ได้: $e'),
-          backgroundColor: Colors.redAccent,
-        ));
+        ToastUtils.showError('ไม่สามารถสร้าง PDF ได้: $e');
       }
     }
   }
@@ -230,8 +233,8 @@ class _StockMonthlyActivitiesPageState
       List<StockActivity> activities, String monthDisplay) {
     return DropdownButtonHideUnderline(
       child: DropdownButton2<String>(
-        customButton: const Icon(
-          Icons.download_rounded,
+        customButton: Icon(
+          PhosphorIcons.downloadSimple(),
           color: Colors.white,
           size: 24,
         ),
@@ -240,7 +243,7 @@ class _StockMonthlyActivitiesPageState
             value: 'pdf',
             child: Row(
               children: [
-                Icon(Icons.picture_as_pdf, color: Colors.red[400], size: 20),
+                Icon(PhosphorIcons.filePdf(), color: Colors.red[400], size: 20),
                 const SizedBox(width: 8),
                 const Text('Download PDF', style: TextStyle(fontSize: 13)),
               ],
@@ -250,7 +253,7 @@ class _StockMonthlyActivitiesPageState
             value: 'excel',
             child: Row(
               children: [
-                Icon(Icons.table_view_rounded,
+                Icon(PhosphorIcons.fileXls(),
                     color: Colors.green[400], size: 20),
                 const SizedBox(width: 8),
                 const Text('Download Excel', style: TextStyle(fontSize: 13)),
@@ -293,24 +296,19 @@ class _StockMonthlyActivitiesPageState
       padding: const EdgeInsets.all(16),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 4)),
-          ],
+          color: kCard,
+          borderRadius: BorderRadius.circular(kRadius),
+          boxShadow: kShadowSmall,
         ),
         child: TextField(
           controller: _searchController,
           onChanged: (value) => setState(() => _searchQuery = value),
           decoration: InputDecoration(
             hintText: 'ค้นหาชื่อสินค้าในเดือนนี้...',
-            prefixIcon: const Icon(Icons.search, color: Color(0xFF6C63FF)),
+            prefixIcon: Icon(PhosphorIcons.magnifyingGlass(), color: kPrimary),
             suffixIcon: _searchController.text.isNotEmpty
                 ? IconButton(
-                    icon: const Icon(Icons.clear, size: 20),
+                    icon: Icon(PhosphorIcons.x(), size: 20),
                     onPressed: () {
                       _searchController.clear();
                       setState(() => _searchQuery = '');
@@ -340,14 +338,9 @@ class _StockMonthlyActivitiesPageState
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(0.02),
-              blurRadius: 10,
-              offset: const Offset(0, 2))
-        ],
+        color: kCard,
+        borderRadius: BorderRadius.circular(kCardRadius),
+        boxShadow: kShadowSmall,
       ),
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
@@ -361,11 +354,10 @@ class _StockMonthlyActivitiesPageState
           tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           leading: Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-                color: const Color(0xFF6C63FF).withOpacity(0.1),
-                shape: BoxShape.circle),
-            child: const Icon(Icons.history_edu_rounded,
-                color: Color(0xFF6C63FF), size: 24),
+            decoration:
+                BoxDecoration(color: kPrimaryLight, shape: BoxShape.circle),
+            child: Icon(PhosphorIcons.calendar(PhosphorIconsStyle.bold),
+                color: kPrimary, size: 24),
           ),
           title: Text(dateDisplay,
               style:
@@ -424,7 +416,7 @@ class _StockMonthlyActivitiesPageState
                                 fontSize: 14),
                           ),
                           const SizedBox(width: 8),
-                          Icon(Icons.arrow_forward_ios_rounded,
+                          Icon(PhosphorIcons.caretRight(),
                               color: Colors.grey[300], size: 10),
                         ],
                       ),
@@ -441,7 +433,7 @@ class _StockMonthlyActivitiesPageState
                         builder: (context) => StockDailyItemsPage(date: date)));
               },
               child: const Text('ดูรายละเอียดทั้งหมดของวันนี้',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF6C63FF))),
+                  style: TextStyle(fontSize: 12, color: kPrimary)),
             ),
             const SizedBox(height: 8),
           ],

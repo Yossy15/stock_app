@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:stock_management_system/core/utils/toast_utils.dart';
 import 'package:stock_management_system/features/stock/presentation/widgets/quick_adjust_dialog.dart';
+import 'package:stock_management_system/core/theme/ui_constants.dart';
 import '../../domain/stock.dart';
 import '../../providers/stock_provider.dart';
 import 'edit_stock_dialog.dart';
@@ -16,8 +19,8 @@ class StockGridItem extends ConsumerWidget {
     final isLowStock = stock.qty < 5 && stock.qty > 0;
     final isOutOfStock = stock.qty == 0;
     final themeColor = isOutOfStock
-        ? Colors.redAccent
-        : (isLowStock ? Colors.orange : const Color(0xFF6C63FF));
+        ? kBorderError
+        : (isLowStock ? Colors.orange : kPrimary);
 
     return Container(
       decoration: BoxDecoration(
@@ -61,7 +64,7 @@ class StockGridItem extends ConsumerWidget {
                         style: TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 18,
-                          color: isOutOfStock ? Colors.redAccent : const Color(0xFF2D2D2D),
+                          color: isOutOfStock ? kBorderError : kText,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -69,7 +72,7 @@ class StockGridItem extends ConsumerWidget {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          Icon(Icons.sell_rounded, color: Colors.grey[400], size: 14),
+                          Icon(PhosphorIcons.tag(), color: Colors.grey[400], size: 14),
                           const SizedBox(width: 4),
                           Text(
                             '฿${stock.price.toStringAsFixed(2)}',
@@ -107,24 +110,24 @@ class StockGridItem extends ConsumerWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           _ActionPill(
-                            icon: Icons.remove_rounded,
+                            icon: PhosphorIcons.minus(),
                             onPressed: stock.qty > 0 ? () => _decreaseQty(context, ref) : null,
                             color: Colors.grey[400]!,
                           ),
                           _ActionPill(
-                            icon: Icons.add_rounded,
+                            icon: PhosphorIcons.plus(),
                             onPressed: () => _increaseQty(context, ref),
-                            color: const Color(0xFF6C63FF),
+                            color: kPrimary,
                           ),
                           _ActionPill(
-                            icon: Icons.edit_rounded,
+                            icon: PhosphorIcons.pencilSimple(),
                             onPressed: () => _showEditDialog(context),
                             color: Colors.blueGrey,
                           ),
                           _ActionPill(
-                            icon: Icons.delete_rounded,
+                            icon: PhosphorIcons.trash(),
                             onPressed: () => _showDeleteConfirmation(context, ref),
-                            color: Colors.redAccent,
+                            color: kBorderError,
                           ),
                         ],
                       ),
@@ -169,43 +172,103 @@ class StockGridItem extends ConsumerWidget {
 
     return showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text(action, style: const TextStyle(fontWeight: FontWeight.bold)),
-        content: Form(
-          key: formKey,
-          child: TextFormField(
-            controller: controller,
-            autofocus: true,
-            decoration: InputDecoration(
-              labelText: 'ชื่อผู้ทำรายการ',
-              hintText: 'กรุณาระบุชื่อของคุณ',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-              prefixIcon: const Icon(Icons.person_outline_rounded),
-            ),
-            validator: (value) => (value == null || value.trim().isEmpty) ? 'กรุณากรอกชื่อ' : null,
+      builder: (context) => Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 40),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(28, 32, 28, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Icon Header
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: kPrimary.withOpacity(0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  PhosphorIcons.userCircle(PhosphorIconsStyle.fill),
+                  color: kPrimary,
+                  size: 40,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                action,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: kText,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'กรุณาระบุชื่อผู้ทำรายการ',
+                style: TextStyle(color: Colors.grey[500], fontSize: 13),
+              ),
+              const SizedBox(height: 28),
+              Form(
+                key: formKey,
+                child: TextFormField(
+                  controller: controller,
+                  autofocus: true,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  decoration: InputDecoration(
+                    hintText: 'ระบุชื่อของคุณ...',
+                    hintStyle: TextStyle(color: Colors.grey[300], fontSize: 16),
+                    prefixIcon: Icon(PhosphorIcons.user(), size: 20),
+                    border: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey[200]!),
+                    ),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey[200]!),
+                    ),
+                    focusedBorder: const UnderlineInputBorder(
+                      borderSide: BorderSide(color: kPrimary, width: 2),
+                    ),
+                  ),
+                  validator: (value) => (value == null || value.trim().isEmpty)
+                      ? 'กรุณากรอกชื่อ'
+                      : null,
+                ),
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kPrimary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20)),
+                    elevation: 0,
+                  ),
+                  onPressed: () {
+                    if (formKey.currentState!.validate()) {
+                      Navigator.pop(context, controller.text.trim());
+                    }
+                  },
+                  child: const Text(
+                    'ตกลง',
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  'ยกเลิก',
+                  style: TextStyle(color: Colors.grey[400], fontSize: 13),
+                ),
+              ),
+            ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('ยกเลิก', style: TextStyle(color: Colors.grey[600])),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF6C63FF),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () {
-              if (formKey.currentState!.validate()) {
-                Navigator.pop(context, controller.text.trim());
-              }
-            },
-            child: const Text('ตกลง'),
-          ),
-        ],
-      ),
+      ).animate().scale(begin: const Offset(0.9, 0.9), duration: 300.ms, curve: Curves.easeOutBack).fadeIn(),
     );
   }
 
@@ -223,36 +286,70 @@ class StockGridItem extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text('ยืนยันการลบ', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Text('คุณแน่ใจหรือไม่ว่าต้องการลบ "${stock.name}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('ยกเลิก', style: TextStyle(color: Colors.grey[600])),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: kBorderError.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(PhosphorIcons.trash(PhosphorIconsStyle.fill), color: kBorderError, size: 24),
             ),
-            onPressed: () async {
-              try {
-                await ref
-                    .read(stockListProvider.notifier)
-                    .deleteStock(stock.id, performer: 'System');
-                ToastUtils.showSuccess('ลบ "${stock.name}" สำเร็จ');
-                if (context.mounted) Navigator.pop(context);
-              } catch (e) {
-                ToastUtils.showError('ไม่สามารถลบสินค้าได้: $e');
-              }
-            },
-            child: const Text('ลบสินค้า'),
+            const SizedBox(width: 16),
+            const Text(
+              'ยืนยันการลบ',
+              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20),
+            ),
+          ],
+        ),
+        content: Text(
+          'คุณแน่ใจหรือไม่ว่าต้องการลบ "${stock.name}"? การดำเนินการนี้ไม่สามารถย้อนกลับได้',
+          style: TextStyle(color: Colors.grey[600], fontSize: 15, height: 1.5),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('ยกเลิก', style: TextStyle(color: Colors.grey[500], fontWeight: FontWeight.w700)),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kBorderError,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  onPressed: () async {
+                    try {
+                      await ref.read(stockListProvider.notifier).deleteStock(stock.id);
+                      if (context.mounted) Navigator.pop(context);
+                      ToastUtils.showSuccess('ลบสินค้าสำเร็จ');
+                    } catch (e) {
+                      ToastUtils.showError('ไม่สามารถลบได้: $e');
+                    }
+                  },
+                  child: const Text('ยืนยันการลบ', style: TextStyle(fontWeight: FontWeight.w800)),
+                ),
+              ),
+            ],
           ),
         ],
-      ),
+      ).animate().scale(begin: const Offset(0.9, 0.9), duration: 300.ms, curve: Curves.easeOutBack).fadeIn(),
     );
   }
 }
@@ -285,7 +382,10 @@ class _ActionPill extends StatelessWidget {
             color: isDisabled ? Colors.grey[300] : color,
           ),
         ),
-      ),
+      ).animate(target: isDisabled ? 0 : 1).scale(
+            begin: const Offset(1.0, 1.0),
+            end: const Offset(0.92, 0.92),
+          ),
     );
   }
 }

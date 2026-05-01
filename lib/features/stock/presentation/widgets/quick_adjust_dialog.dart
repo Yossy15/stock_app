@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:reactive_forms/reactive_forms.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:stock_management_system/core/utils/toast_utils.dart';
+import 'package:stock_management_system/core/theme/ui_constants.dart';
 import '../../domain/stock.dart';
 import '../../providers/stock_provider.dart';
 
@@ -27,150 +30,172 @@ class QuickAdjustDialog extends ConsumerWidget {
       form: () => form,
       builder: (context, form, child) {
         return Dialog(
+          insetPadding: const EdgeInsets.symmetric(horizontal: 32),
           shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
           elevation: 0,
           backgroundColor: Colors.transparent,
           child: Container(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.fromLTRB(28, 32, 28, 24),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(28),
+              borderRadius: BorderRadius.circular(32),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
+                  color: Colors.black.withOpacity(0.12),
+                  blurRadius: 30,
+                  offset: const Offset(0, 15),
                 ),
               ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Header Icon
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF6C63FF).withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Icon(
-                    Icons.auto_fix_high_rounded,
-                    color: Color(0xFF6C63FF),
-                    size: 32,
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                Text(
-                  stock.name,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1A1A1A),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'คลังปัจจุบัน: ${stock.qty} ชิ้น',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 28),
-
-                ReactiveTextField<String>(
-                  formControlName: 'performer',
-                  textInputAction: TextInputAction.done,
-                  decoration: InputDecoration(
-                    labelText: 'ชื่อผู้ทำรายการ',
-                    hintText: 'ระบุชื่อของคุณ',
-                    prefixIcon: const Icon(Icons.person_outline_rounded),
-                    filled: true,
-                    fillColor: Colors.grey[50],
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      borderSide: BorderSide.none,
+                // Header Info
+                Column(
+                  children: [
+                    Text(
+                      'สินค้า: ${stock.name}',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: kTextSub,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // Input Field with Focus
-                ReactiveTextField<int>(
-                  formControlName: 'amount',
-                  autofocus: true,
-                  keyboardType: TextInputType.number,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF6C63FF),
-                  ),
-                  decoration: InputDecoration(
-                    contentPadding: const EdgeInsets.symmetric(vertical: 20),
-                    filled: true,
-                    fillColor: Colors.grey[50],
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      borderSide: BorderSide.none,
-                    ),
-                    prefixIcon:
-                        const Icon(Icons.edit_outlined, color: Colors.grey),
-                    suffixIcon: const Padding(
-                      padding: EdgeInsets.only(right: 16),
-                      child: Center(
-                        widthFactor: 1,
-                        child: Text('ชิ้น',
-                            style: TextStyle(
-                                color: Colors.grey,
-                                fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 4),
+                    RichText(
+                      text: TextSpan(
+                        style: const TextStyle(color: kText, fontSize: 16),
+                        children: [
+                          const TextSpan(text: 'คงเหลือปัจจุบัน: '),
+                          TextSpan(
+                            text: '${stock.qty}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w900,
+                              color: kPrimary,
+                              fontSize: 22,
+                            ),
+                          ),
+                          const TextSpan(text: ' ชิ้น'),
+                        ],
                       ),
                     ),
-                    hintText: '0',
-                  ),
-                  onTap: (control) {
-                    // select all text on tap to make editing easier
-                  },
+                  ],
+                ),
+                const SizedBox(height: 32),
+
+                // Amount Input with Stepper
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildStepperButton(
+                      icon: PhosphorIcons.minus(),
+                      onPressed: () {
+                        final current = form.control('amount').value as int;
+                        if (current > 1) {
+                          form.control('amount').value = current - 1;
+                        }
+                      },
+                    ),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      child: ReactiveTextField<int>(
+                        formControlName: 'amount',
+                        keyboardType: TextInputType.number,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 48,
+                          fontWeight: FontWeight.w900,
+                          color: kText,
+                          letterSpacing: -2,
+                        ),
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          hintText: '0',
+                          suffixText: 'ชิ้น',
+                          suffixStyle: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+                    _buildStepperButton(
+                      icon: PhosphorIcons.plus(),
+                      onPressed: () {
+                        final current = form.control('amount').value as int;
+                        form.control('amount').value = current + 1;
+                      },
+                    ),
+                  ],
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
-                // Live Preview Indicator
+                // Real-time Preview Inline
                 ReactiveValueListenableBuilder<int>(
                   formControlName: 'amount',
                   builder: (context, control, child) {
                     final amount = control.value ?? 0;
-                    return Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    final reducedResult = stock.qty - amount;
+                    final addedResult = stock.qty + amount;
+
+                    return Column(
                       children: [
-                        _buildPreviewChip(
-                            'หากลดเหลือ: ',
-                            '${stock.qty - amount}',
-                            Colors.redAccent,
-                            (stock.qty - amount) >= 0),
-                        const SizedBox(width: 8),
-                        _buildPreviewChip('หากเพิ่มเป็น: ',
-                            '${stock.qty + amount}', Colors.green, true),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _buildInlinePreview(
+                              'ถ้าลดจะเหลือ: ',
+                              reducedResult < 0 ? 'ยอดติดลบ!' : '$reducedResult',
+                              reducedResult < 0 ? kBorderError : Colors.grey[500]!,
+                            ),
+                            const SizedBox(width: 16),
+                            _buildInlinePreview(
+                              'ถ้าเพิ่มจะเป็น: ',
+                              '$addedResult',
+                              Colors.grey[500]!,
+                            ),
+                          ],
+                        ),
                       ],
                     );
                   },
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 32),
 
-                // Buttons
+                // Performer Input (Minimal)
+                ReactiveTextField<String>(
+                  formControlName: 'performer',
+                  textInputAction: TextInputAction.done,
+                  decoration: InputDecoration(
+                    labelText: 'ชื่อผู้ทำรายการ',
+                    prefixIcon: Icon(PhosphorIcons.user(), size: 18),
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    border: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey[200]!),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 32),
+
+                // Primary Action Buttons
                 Row(
                   children: [
                     Expanded(
                       child: _AdjustButton(
-                        label: 'ลดสต็อก',
-                        icon: Icons.remove_rounded,
-                        color: Colors.redAccent,
+                        label: 'ลดสต็อก (OUT)',
+                        icon: PhosphorIcons.minus(PhosphorIconsStyle.bold),
+                        color: kBorderError,
                         onPressed: () =>
                             _handleAdjust(context, ref, form, isAdd: false),
                       ),
@@ -178,66 +203,60 @@ class QuickAdjustDialog extends ConsumerWidget {
                     const SizedBox(width: 16),
                     Expanded(
                       child: _AdjustButton(
-                        label: 'เพิ่มสต็อก',
-                        icon: Icons.add_rounded,
-                        color: const Color(0xFF6C63FF),
+                        label: 'เพิ่มสต็อก (IN)',
+                        icon: PhosphorIcons.plus(PhosphorIconsStyle.bold),
+                        color: kPrimary,
                         onPressed: () =>
                             _handleAdjust(context, ref, form, isAdd: true),
                       ),
                     ),
                   ],
                 ),
-
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.grey[400],
-                    minimumSize: const Size(double.infinity, 40),
+                  child: Text(
+                    'ยกเลิก',
+                    style: TextStyle(color: Colors.grey[400], fontSize: 13),
                   ),
-                  child: const Text('ยกเลิกรายการ',
-                      style: TextStyle(fontWeight: FontWeight.w500)),
                 ),
               ],
             ),
           ),
-        );
+        ).animate().scale(begin: const Offset(0.9, 0.9), duration: 300.ms, curve: Curves.easeOutBack).fadeIn();
       },
     );
   }
 
-  Widget _buildPreviewChip(
-      String label, String value, Color color, bool isValid) {
-    if (!isValid && color == Colors.redAccent) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: Colors.red[50],
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: const Text('ยอดติดลบ!',
-            style: TextStyle(
-                color: Colors.red, fontSize: 11, fontWeight: FontWeight.bold)),
-      );
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(10),
+  Widget _buildStepperButton({required IconData icon, required VoidCallback onPressed}) {
+    return IconButton.filled(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 20),
+      style: IconButton.styleFrom(
+        backgroundColor: Colors.grey[100],
+        foregroundColor: kText,
+        padding: const EdgeInsets.all(12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
-      child: RichText(
-        text: TextSpan(
-          style: TextStyle(color: color.withOpacity(0.7), fontSize: 11),
-          children: [
-            TextSpan(text: label),
-            TextSpan(
-                text: value,
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-          ],
+    );
+  }
+
+  Widget _buildInlinePreview(String label, String value, Color valueColor) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: TextStyle(color: Colors.grey[400], fontSize: 10),
         ),
-      ),
+        Text(
+          value,
+          style: TextStyle(
+            color: valueColor,
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+          ),
+        ),
+      ],
     );
   }
 
@@ -316,7 +335,8 @@ class _AdjustButton extends StatelessWidget {
                     const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
           ],
         ),
-      ),
+      ).animate(onPlay: (controller) => controller.repeat(reverse: true))
+       .scale(begin: const Offset(1.0, 1.0), end: const Offset(1.02, 1.02), duration: 1000.ms),
     );
   }
 }

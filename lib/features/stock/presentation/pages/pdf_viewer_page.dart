@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:syncfusion_flutter_core/theme.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:stock_management_system/core/theme/ui_constants.dart';
+import 'package:stock_management_system/core/widgets/common_widgets.dart';
 import 'dart:typed_data';
 
 class PdfViewerPage extends StatefulWidget {
@@ -23,35 +27,33 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: Text(
-          widget.title,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-        ),
-        backgroundColor: const Color(0xFF6C63FF),
-        foregroundColor: Colors.white,
-        elevation: 0,
+      backgroundColor: kSurface,
+      appBar: AppAppBar(
+        title: widget.title,
         actions: [
           IconButton(
-            icon: const Icon(Icons.zoom_out_rounded),
+            icon: Icon(PhosphorIcons.magnifyingGlassMinus()),
             onPressed: () {
               _pdfViewerController.zoomLevel =
                   (_pdfViewerController.zoomLevel - 0.5).clamp(1.0, 5.0);
             },
+            tooltip: 'ซูมออก',
           ),
           IconButton(
-            icon: const Icon(Icons.zoom_in_rounded),
+            icon: Icon(PhosphorIcons.magnifyingGlassPlus()),
             onPressed: () {
               _pdfViewerController.zoomLevel =
                   (_pdfViewerController.zoomLevel + 0.5).clamp(1.0, 5.0);
             },
+            tooltip: 'ซูมเข้า',
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: SfPdfViewerTheme(
         data: SfPdfViewerThemeData(
-          backgroundColor: Colors.grey[100],
+          backgroundColor: kSurface,
+          progressBarColor: kPrimary,
         ),
         child: SfPdfViewer.memory(
           widget.pdfData,
@@ -62,7 +64,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
             _pdfViewerController.jumpToPage(1);
           },
         ),
-      ),
+      ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.05, end: 0),
     );
   }
 }

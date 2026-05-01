@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import '../theme/ui_constants.dart';
 
 class ToastUtils {
   static final FToast _fToast = FToast();
@@ -12,7 +13,7 @@ class ToastUtils {
     _showCustomToast(
       message: message,
       icon: Icons.check_circle_outline,
-      color: const Color(0xFF6C63FF),
+      color: kSuccess,
     );
   }
 
@@ -20,7 +21,7 @@ class ToastUtils {
     _showCustomToast(
       message: message,
       icon: Icons.error_outline,
-      color: Colors.redAccent,
+      color: kError,
     );
   }
 
@@ -36,8 +37,8 @@ class ToastUtils {
         color: color,
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.3),
-            blurRadius: 8,
+            color: color.withOpacity(0.2),
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
@@ -45,12 +46,16 @@ class ToastUtils {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: Colors.white),
+          Icon(icon, color: Colors.white, size: 20),
           const SizedBox(width: 12.0),
           Flexible(
             child: Text(
               message,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
             ),
           ),
         ],
@@ -60,7 +65,7 @@ class ToastUtils {
     _fToast.showToast(
       child: toast,
       gravity: ToastGravity.TOP,
-      toastDuration: const Duration(seconds: 2),
+      toastDuration: const Duration(seconds: 3),
     );
   }
 }

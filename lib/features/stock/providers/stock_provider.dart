@@ -290,4 +290,16 @@ class StockList extends _$StockList {
       rethrow;
     }
   }
+
+  Future<void> withdrawStock(String id, int amount, String performer) async {
+    final stocks = state.value ?? [];
+    final stock = stocks.firstWhere((s) => s.id == id);
+    final newQty = stock.qty - amount;
+    
+    if (newQty < 0) {
+      throw Exception('จำนวนสินค้าไม่เพียงพอ');
+    }
+
+    await updateStockQty(id, newQty, performer: performer);
+  }
 }

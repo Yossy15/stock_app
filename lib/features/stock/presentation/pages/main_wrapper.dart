@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:stock_management_system/core/theme/ui_constants.dart';
 import '../../providers/stock_provider.dart';
 import 'stock_list_page.dart';
 import 'stock_dashboard_page.dart';
+import 'stock_withdraw_page.dart';
 
 class MainWrapper extends ConsumerStatefulWidget {
   const MainWrapper({super.key});
@@ -16,6 +20,7 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
 
   final List<Widget> _pages = [
     const StockListPage(),
+    const StockWithdrawPage(),
     const StockDashboardPage(),
   ];
 
@@ -43,8 +48,8 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
               // Reset search when leaving Stock List or switching tabs
               ref.read(stockListProvider.notifier).clearSearch();
               
-              // If going to Dashboard, refresh data to be real-time
-              if (index == 1) {
+              // If going to Dashboard or Withdraw page, refresh data to be real-time
+              if (index == 1 || index == 2) {
                 ref.read(stockListProvider.notifier).refresh();
               }
               
@@ -55,19 +60,30 @@ class _MainWrapperState extends ConsumerState<MainWrapper> {
           },
           elevation: 0,
           backgroundColor: Colors.white,
-          selectedItemColor: const Color(0xFF6C63FF),
+          selectedItemColor: kPrimary,
           unselectedItemColor: Colors.grey,
           showUnselectedLabels: true,
           type: BottomNavigationBarType.fixed,
-          items: const [
+          items: [
             BottomNavigationBarItem(
-              icon: Icon(Icons.inventory_2_outlined),
-              activeIcon: Icon(Icons.inventory_2),
+              icon: Icon(PhosphorIcons.package()),
+              activeIcon: Icon(PhosphorIcons.package(PhosphorIconsStyle.fill))
+                  .animate()
+                  .scale(begin: const Offset(0.8, 0.8), end: const Offset(1.1, 1.1), duration: 200.ms),
               label: 'คลังสินค้า',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard_outlined),
-              activeIcon: Icon(Icons.dashboard),
+              icon: Icon(PhosphorIcons.export()),
+              activeIcon: Icon(PhosphorIcons.export(PhosphorIconsStyle.fill))
+                  .animate()
+                  .scale(begin: const Offset(0.8, 0.8), end: const Offset(1.1, 1.1), duration: 200.ms),
+              label: 'เบิกสินค้า',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(PhosphorIcons.squaresFour()),
+              activeIcon: Icon(PhosphorIcons.squaresFour(PhosphorIconsStyle.fill))
+                  .animate()
+                  .scale(begin: const Offset(0.8, 0.8), end: const Offset(1.1, 1.1), duration: 200.ms),
               label: 'Dashboard',
             ),
           ],
