@@ -28,10 +28,12 @@ class ExportService {
       final dateKey = DateFormat('dd/MM/yyyy').format(a.timestamp.toLocal());
       groupedActivities.putIfAbsent(dateKey, () => []).add(a);
     }
+
+    // Sort Ascending: Oldest to Newest
     final sortedDates = groupedActivities.keys.toList()
       ..sort((a, b) => DateFormat('dd/MM/yyyy')
-          .parse(b)
-          .compareTo(DateFormat('dd/MM/yyyy').parse(a)));
+          .parse(a)
+          .compareTo(DateFormat('dd/MM/yyyy').parse(b)));
 
     pdf.addPage(
       pw.MultiPage(
@@ -60,7 +62,7 @@ class ExportService {
                 pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    pw.Text('รายงานสรุปการเคลื่อนไหวสต็อก',
+                    pw.Text('รายงานสรุปสต็อกสินค้า',
                         style: pw.TextStyle(
                             font: fontBold,
                             fontSize: 28,
@@ -103,8 +105,6 @@ class ExportService {
                   pw.Container(width: 1, height: 40, color: PdfColors.grey300),
                   _buildSummaryItem('ยอดเบิกรวม', '-$totalOut',
                       PdfColors.red700, font, fontBold),
-                  // pw.Container(width: 1, height: 40, color: PdfColors.grey300),
-                  // _buildSummaryItem('รายการทั้งหมด', '${activities.length}', PdfColors.indigo700, font, fontBold),
                 ],
               ),
             ),
